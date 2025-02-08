@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 @ToString
+@Getter
+@Setter
 public class Store {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)

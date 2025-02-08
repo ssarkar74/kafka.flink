@@ -2,11 +2,9 @@ package com.sarkar.kafka.stream.topology;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.sarkar.kafka.stream.entity.Store;
+import com.sarkar.kafka.stream.dao.StoreDao;
 import com.sarkar.kafka.stream.model.FileLine;
-import com.sarkar.kafka.stream.repository.StoreRepo;
 import com.sarkar.kafka.stream.transformer.DedupeDBTransformer;
-import com.sarkar.kafka.stream.transformer.DedupeTransformer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -16,23 +14,17 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
-import org.apache.kafka.streams.state.WindowStore;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.support.serializer.JsonSerde;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.util.StringTokenizer;
-
-import static com.sarkar.kafka.stream.transformer.DedupeTransformer.STORE_NAME;
 
 @Slf4j
 @Component
 public class ConnectorTopology {
     @Autowired
-    private StoreRepo storeRepo;
+    private StoreDao storeDao;
     public static class JsonSerializer<T> implements Serializer<T>{
         private final Gson gson = new GsonBuilder().create();
         @Override
@@ -58,15 +50,8 @@ public class ConnectorTopology {
     final JsonDeserializer<FileLine> deserializer = new JsonDeserializer<>(FileLine.class);
     Serde<FileLine> serde = Serdes.serdeFrom(serializer, deserializer);
 
-    final StoreBuilder<WindowStore<FileLine, Long>> dedupeStoreBuilder = Stores.windowStoreBuilder(
-            Stores.persistentWindowStore(STORE_NAME,
-                    Duration.ofDays(1),
-                    Duration.ofDays(1),
-                    false),
-            serde,
-            Serdes.Long());
-    @Autowired
-    public void process(StreamsBuilder streamsBuilder){
+    /*@Autowired
+    public void process(@Qualifier(value = "jsonStream")StreamsBuilder streamsBuilder){
         streamsBuilder.addStateStore(dedupeStoreBuilder);
         KStream<String, FileLine> stream = streamsBuilder.stream("orders",
                 Consumed.with(Serdes.String(), new JsonSerde<>(FileLine.class)))
@@ -84,5 +69,24 @@ public class ConnectorTopology {
             StringTokenizer tokens = new StringTokenizer(value.payload());
             return tokens.nextToken();
         },storeRepo));
+    }*/
+    @Autowired
+    public void process(@Qualifier(value = "jsonStream")StreamsBuilder streamsBuilder){
+        KStream<String, String> stream = streamsBuilder.stream("orders",
+                        Consumed.with(Serdes.String(), Serdes.String()))
+                .selectKey((key, value) -> {
+                    if(StringUtils.isBlank(value)){
+                        return null;
+                    }
+                    StringTokenizer tokens = new StringTokenizer(value);
+                    return tokens.nextToken();
+                });
+        stream.process(() -> new DedupeDBTransformer<>((key, value) -> {
+            if(StringUtils.isBlank(value)) {
+                return null;
+            }
+            StringTokenizer tokens = new StringTokenizer(value);
+            return tokens.nextToken();
+        }, storeDao));
     }
 }

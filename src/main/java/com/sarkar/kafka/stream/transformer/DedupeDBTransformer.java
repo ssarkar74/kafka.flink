@@ -1,7 +1,7 @@
 package com.sarkar.kafka.stream.transformer;
 
+import com.sarkar.kafka.stream.dao.StoreDao;
 import com.sarkar.kafka.stream.entity.Store;
-import com.sarkar.kafka.stream.repository.StoreRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
@@ -17,7 +17,7 @@ import java.time.ZoneId;
 public class DedupeDBTransformer<K, V, E> implements Processor<K, V, K, V> {
     private ProcessorContext context;
 
-    private StoreRepo  storeRepo;
+    private StoreDao storeDao;
     /*
      * Key: unique ID
      * Value: time stamp (event time ) of the corresponding event
@@ -34,9 +34,9 @@ public class DedupeDBTransformer<K, V, E> implements Processor<K, V, K, V> {
      *                                      and forwarded as-is
      */
     public DedupeDBTransformer(final KeyValueMapper<K, V, E> idExtractor,
-                               final StoreRepo storeRepo) {
+                               final StoreDao storeDao) {
         this.idExtractor = idExtractor;
-        this.storeRepo = storeRepo;
+        this.storeDao = storeDao;
     }
     @Override
     public void init(ProcessorContext<K, V> context) {
@@ -52,7 +52,7 @@ public class DedupeDBTransformer<K, V, E> implements Processor<K, V, K, V> {
             context.forward(record);
         } else {
             final KeyValue<K, V> output;
-            Store store = this.storeRepo.findByEventId(eventId.toString());
+            Store store = this.storeDao.getStoreByEventId(eventId.toString());
             if (store == null) {
                 LocalDateTime localDateTime =
                         Instant.ofEpochMilli(context.currentStreamTimeMs())
@@ -60,7 +60,7 @@ public class DedupeDBTransformer<K, V, E> implements Processor<K, V, K, V> {
                                 .toLocalDateTime();
                 store = Store.builder().eventId(eventId.toString()).updateTime(localDateTime).build();
                 log.info("Not Duplicate.......");
-                this.storeRepo.save(store);
+                this.storeDao.insert(store);
             } else {
                 output = KeyValue.pair(record.key(), record.value());
                 LocalDateTime localDateTime =
@@ -68,7 +68,7 @@ public class DedupeDBTransformer<K, V, E> implements Processor<K, V, K, V> {
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDateTime();
                 log.info("Duplicate.......");
-                this.storeRepo.save(store);
+                this.storeDao.updateTimeStamp(store);
             }
             context.forward(record);
         }
