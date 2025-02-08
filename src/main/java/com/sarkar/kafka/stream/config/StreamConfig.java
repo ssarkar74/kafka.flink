@@ -21,17 +21,30 @@ import java.util.Map;
 @Slf4j
 @Configuration
 public class StreamConfig {
-    /*@Bean
+    @Bean
     public NewTopic topicBuilder() {
         return TopicBuilder.name("orders")
                 .partitions(2)
                 .replicas(1)
                 .build();
-    }*/
+    }
+    @Bean
+    public NewTopic csvTopicBuilder() {
+        return TopicBuilder.name("csv-orders")
+                .partitions(4)
+                .replicas(1)
+                .build();
+    }
     @Bean(name="jsonStream")
-    public StreamsBuilderFactoryBean jsnStreamBuilder(){
+    public StreamsBuilderFactoryBean jsonStreamBuilder(){
         Map<String, Object> jsonStreamBuilderProperties = commonStreamsConfigProperties();
         jsonStreamBuilderProperties.put(StreamsConfig.APPLICATION_ID_CONFIG, "kafka-stream");
+        return new StreamsBuilderFactoryBean(new KafkaStreamsConfiguration(jsonStreamBuilderProperties));
+    }
+    @Bean(name="csvStream")
+    public StreamsBuilderFactoryBean csvStreamBuilder(){
+        Map<String, Object> jsonStreamBuilderProperties = commonStreamsConfigProperties();
+        jsonStreamBuilderProperties.put(StreamsConfig.APPLICATION_ID_CONFIG, "kafka-csv-stream");
         return new StreamsBuilderFactoryBean(new KafkaStreamsConfiguration(jsonStreamBuilderProperties));
     }
     private Map<String, Object> commonStreamsConfigProperties()  {

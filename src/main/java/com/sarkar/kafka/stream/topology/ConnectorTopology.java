@@ -16,6 +16,7 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Component;
 
 import java.util.StringTokenizer;
@@ -50,9 +51,8 @@ public class ConnectorTopology {
     final JsonDeserializer<FileLine> deserializer = new JsonDeserializer<>(FileLine.class);
     Serde<FileLine> serde = Serdes.serdeFrom(serializer, deserializer);
 
-    /*@Autowired
+    @Autowired
     public void process(@Qualifier(value = "jsonStream")StreamsBuilder streamsBuilder){
-        streamsBuilder.addStateStore(dedupeStoreBuilder);
         KStream<String, FileLine> stream = streamsBuilder.stream("orders",
                 Consumed.with(Serdes.String(), new JsonSerde<>(FileLine.class)))
                 .selectKey((key, value) -> {
@@ -68,11 +68,11 @@ public class ConnectorTopology {
             }
             StringTokenizer tokens = new StringTokenizer(value.payload());
             return tokens.nextToken();
-        },storeRepo));
-    }*/
+        },storeDao));
+    }
     @Autowired
-    public void process(@Qualifier(value = "jsonStream")StreamsBuilder streamsBuilder){
-        KStream<String, String> stream = streamsBuilder.stream("orders",
+    public void processCsv(@Qualifier(value = "csvStream")StreamsBuilder streamsBuilder){
+        KStream<String, String> stream = streamsBuilder.stream("csv-orders",
                         Consumed.with(Serdes.String(), Serdes.String()))
                 .selectKey((key, value) -> {
                     if(StringUtils.isBlank(value)){
