@@ -5,19 +5,16 @@ import com.sarkar.kafka.stream.repository.StoreRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
-import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.state.WindowStore;
-import org.apache.kafka.streams.state.WindowStoreIterator;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Slf4j
-public class DedupeDBTransformer<K, V, E> implements Transformer<K, V, KeyValue<K, V>> {
+public class DedupeDBTransformer<K, V, E> implements Processor<K, V, K, V> {
     private ProcessorContext context;
 
     private StoreRepo  storeRepo;
@@ -26,7 +23,7 @@ public class DedupeDBTransformer<K, V, E> implements Transformer<K, V, KeyValue<
      * Value: time stamp (event time ) of the corresponding event
      * when the key was seen for the first time
      */
-    private final KeyValueMapper<K, V, E> isExtractor;
+    private final KeyValueMapper<K, V, E> idExtractor;
 
     /**
      * @param idExtractor                   extracts a unique id from a record by which de-duplicate
@@ -38,42 +35,42 @@ public class DedupeDBTransformer<K, V, E> implements Transformer<K, V, KeyValue<
      */
     public DedupeDBTransformer(final KeyValueMapper<K, V, E> idExtractor,
                                final StoreRepo storeRepo) {
-        this.isExtractor = idExtractor;
+        this.idExtractor = idExtractor;
         this.storeRepo = storeRepo;
     }
-    @Autowired
-    public void init(final ProcessorContext processorContext) {
-        this.context = processorContext;
-    }
-
     @Override
-    public KeyValue<K, V> transform(final K key, final V value) {
-        final E eventId = isExtractor.apply(key, value);
-        log.info("eventId : {} Key : {} - Value : {}", eventId, key, value);
+    public void init(ProcessorContext<K, V> context) {
+        this.context = context;
+    }
+    @Override
+    public void process(Record<K, V> record) {
+
+        final E eventId = idExtractor.apply(record.key(), record.value());
+        log.info("eventId : {} Key : {} - Value : {}", eventId, record.key(), record.value());
 
         if(eventId == null) {
-            return KeyValue.pair(key, value);
+            context.forward(record);
         } else {
             final KeyValue<K, V> output;
             Store store = this.storeRepo.findByEventId(eventId.toString());
             if (store == null) {
-                output = null;
                 LocalDateTime localDateTime =
-                        Instant.ofEpochMilli(context.timestamp())
+                        Instant.ofEpochMilli(context.currentStreamTimeMs())
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDateTime();
                 store = Store.builder().eventId(eventId.toString()).updateTime(localDateTime).build();
+                log.info("Not Duplicate.......");
                 this.storeRepo.save(store);
             } else {
-                output = KeyValue.pair(key, value);
+                output = KeyValue.pair(record.key(), record.value());
                 LocalDateTime localDateTime =
-                        Instant.ofEpochMilli(context.timestamp())
+                        Instant.ofEpochMilli(context.currentStreamTimeMs())
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDateTime();
-                //store.setUpdateTime(localDateTime);
+                log.info("Duplicate.......");
                 this.storeRepo.save(store);
             }
-            return output;
+            context.forward(record);
         }
     }
 

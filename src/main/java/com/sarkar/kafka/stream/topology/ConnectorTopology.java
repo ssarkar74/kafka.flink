@@ -8,6 +8,7 @@ import com.sarkar.kafka.stream.repository.StoreRepo;
 import com.sarkar.kafka.stream.transformer.DedupeDBTransformer;
 import com.sarkar.kafka.stream.transformer.DedupeTransformer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -70,23 +71,18 @@ public class ConnectorTopology {
         KStream<String, FileLine> stream = streamsBuilder.stream("orders",
                 Consumed.with(Serdes.String(), new JsonSerde<>(FileLine.class)))
                 .selectKey((key, value) -> {
+                    if(StringUtils.isBlank(value.payload())){
+                        return null;
+                    }
                     StringTokenizer tokens = new StringTokenizer(value.payload());
                     return tokens.nextToken();
                 });
-        stream.transform(() -> new DedupeDBTransformer<>((key, value) -> {
-            if(value.payload() == null) {
+        stream.process(() -> new DedupeDBTransformer<>((key, value) -> {
+            if(StringUtils.isBlank(value.payload())) {
                 return null;
             }
             StringTokenizer tokens = new StringTokenizer(value.payload());
             return tokens.nextToken();
         },storeRepo));
-        /*stream.transform(() -> new DedupeTransformer<>(Duration.ofDays(1).toMillis(),
-                (key, value) -> {
-                    if(value.payload() == null) {
-                        return null;
-                    }
-                    StringTokenizer tokens = new StringTokenizer(value.payload());
-                    return tokens.nextToken();
-                }), STORE_NAME);*/
     }
 }

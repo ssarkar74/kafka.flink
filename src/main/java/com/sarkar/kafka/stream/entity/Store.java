@@ -1,15 +1,15 @@
 package com.sarkar.kafka.stream.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
+@ToString
 public class Store {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
