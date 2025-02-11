@@ -1,13 +1,11 @@
 package com.sarkar.kafka.stream.dao;
 
 import com.sarkar.kafka.stream.entity.Store;
-import com.sarkar.kafka.stream.exception.DataException;
 import com.sarkar.kafka.stream.repository.StoreRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,14 +28,7 @@ public class StoreDao {
     }
 
     @CachePut(value="store-cache", key="#result.eventId")
-    @Transactional
     public Store  insert(Store store){
-        try {
-            store = storeRepo.save(store);
-        }
-        catch(Exception e){
-            throw new DataException(e);
-        }
-        return store;
+        return storeRepo.save(store);
     }
 }

@@ -12,6 +12,7 @@ import org.apache.kafka.streams.processor.api.Record;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -67,7 +68,7 @@ public class DedupeDBTransformer<K, V, E> implements Processor<K, V, K, V> {
                 log.info("Not Duplicate.......");
                 try {
                     this.storeDao.insert(store);
-                } catch (DataException e) {
+                } catch (DataIntegrityViolationException e) {
                     log.info("Duplicate by DB constraint.......");
                 }
             } else {
