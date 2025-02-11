@@ -37,24 +37,27 @@ public class StreamConfig {
     }
     @Bean(name="jsonStream")
     public StreamsBuilderFactoryBean jsonStreamBuilder(){
-        Map<String, Object> jsonStreamBuilderProperties = commonStreamsConfigProperties();
+        Map<String, Object> jsonStreamBuilderProperties = commonStreamsConfigProperties(2);
         jsonStreamBuilderProperties.put(StreamsConfig.APPLICATION_ID_CONFIG, "kafka-stream");
         return new StreamsBuilderFactoryBean(new KafkaStreamsConfiguration(jsonStreamBuilderProperties));
     }
     @Bean(name="csvStream")
     public StreamsBuilderFactoryBean csvStreamBuilder(){
-        Map<String, Object> jsonStreamBuilderProperties = commonStreamsConfigProperties();
+        Map<String, Object> jsonStreamBuilderProperties = commonStreamsConfigProperties(4);
         jsonStreamBuilderProperties.put(StreamsConfig.APPLICATION_ID_CONFIG, "kafka-csv-stream");
         return new StreamsBuilderFactoryBean(new KafkaStreamsConfiguration(jsonStreamBuilderProperties));
     }
-    private Map<String, Object> commonStreamsConfigProperties()  {
+    private Map<String, Object> commonStreamsConfigProperties(Integer threadcount)  {
         Map<String, Object> props = new HashMap<>();
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, 2);
+        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, threadcount);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass().getName());
         props.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class.getName());
         props.put(StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG, DefaultProductionExceptionHandler.class.getName());
+        //Must add retry. otherwise competing transaction will fail
+        props.put("retries", 10);
+        props.put("retry.backoff.ms", 100);
         return props;
     }
 }

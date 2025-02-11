@@ -10,10 +10,13 @@ import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.WindowStore;
 import org.apache.kafka.streams.state.WindowStoreIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 public class DedupeTransformer<K, V, E> implements Transformer<K, V, KeyValue<K, V>> {
+    private static final Logger log = LoggerFactory.getLogger(DedupeTransformer.class);
     private ProcessorContext context;
     public static final String STORE_NAME = "csv-store";
 

@@ -74,6 +74,7 @@ public class ConnectorTopology {
     public void processCsv(@Qualifier(value = "csvStream")StreamsBuilder streamsBuilder){
         KStream<String, String> stream = streamsBuilder.stream("csv-orders",
                         Consumed.with(Serdes.String(), Serdes.String()))
+                .peek((key, value) -> log.info("From Producer Key : {}, Value : {}", key, value))
                 .selectKey((key, value) -> {
                     if(StringUtils.isBlank(value)){
                         return null;

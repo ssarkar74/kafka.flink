@@ -13,24 +13,11 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>KafkaStreams</name>
 	<description>Kafka Streams through Connector</description>
-<!--	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>-->
 	<properties>
 		<java.version>17</java.version>
 		<maven.javadoc.skip>true</maven.javadoc.skip>
 		<project.buildsourceEncoding>UTF-8</project.buildsourceEncoding>
-		<tomcat.version>9.0.86</tomcat.version>
+		<tomcat.version>10.1.16</tomcat.version>
 		<project.reporting.outputEncodin>UTF-8</project.reporting.outputEncodin>
 		<spring-security.version>5.7.12</spring-security.version>
 	</properties>
@@ -133,6 +120,11 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
 			<version>6.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.0.3</version>
 		</dependency>
 	</dependencies>
 

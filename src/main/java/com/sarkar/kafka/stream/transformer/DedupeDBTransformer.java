@@ -2,12 +2,16 @@ package com.sarkar.kafka.stream.transformer;
 
 import com.sarkar.kafka.stream.dao.StoreDao;
 import com.sarkar.kafka.stream.entity.Store;
+import com.sarkar.kafka.stream.exception.DataException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
+import org.hibernate.exception.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -15,6 +19,7 @@ import java.time.ZoneId;
 
 @Slf4j
 public class DedupeDBTransformer<K, V, E> implements Processor<K, V, K, V> {
+    private static final Logger log = LoggerFactory.getLogger(DedupeDBTransformer.class);
     private ProcessorContext context;
 
     private StoreDao storeDao;
@@ -60,7 +65,11 @@ public class DedupeDBTransformer<K, V, E> implements Processor<K, V, K, V> {
                                 .toLocalDateTime();
                 store = Store.builder().eventId(eventId.toString()).updateTime(localDateTime).build();
                 log.info("Not Duplicate.......");
-                this.storeDao.insert(store);
+                try {
+                    this.storeDao.insert(store);
+                } catch (DataException e) {
+                    log.info("Duplicate by DB constraint.......");
+                }
             } else {
                 output = KeyValue.pair(record.key(), record.value());
                 LocalDateTime localDateTime =

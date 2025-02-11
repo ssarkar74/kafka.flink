@@ -23,7 +23,7 @@ public class ProducerUtil {
     }
 
     public static RecordMetadata publishMessage(String topicName, String key, String message){
-        ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topicName, key, message);
+        ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topicName, Integer.valueOf(key) % 4, key, message);
         RecordMetadata recordMetadata = null;
             log.info("producer record : {}", producerRecord);
         try {
