@@ -17,11 +17,11 @@ public class StoreDao {
     public List<Store> findAll(){
         return storeRepo.findAll();
     }
-    //@Cacheable(value="store-cache", key="#eventId", unless = "#result==null")
+    //@Cacheable(amount="store-cache", key="#eventId", unless = "#result==null")
     public Store getStoreByEventId(String eventId){
         return storeRepo.findByEventId(eventId);
     }
-    //@CachePut(value="store-cache", key="#result.eventId")
+    //@CachePut(amount="store-cache", key="#result.eventId")
     public Store updateTimeStamp(Store store){
         store.setUpdateTime(LocalDateTime.now());
         return storeRepo.save(store);

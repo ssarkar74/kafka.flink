@@ -18,6 +18,8 @@ import org.springframework.kafka.config.TopicBuilder;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.sarkar.kafka.stream.Constant.*;
+
 @Slf4j
 @Configuration
 public class StreamConfig {
@@ -29,9 +31,37 @@ public class StreamConfig {
                 .build();
     }
     @Bean
-    public NewTopic csvTopicBuilder() {
-        return TopicBuilder.name("csv-orders")
-                .partitions(4)
+    public NewTopic clientopicBuilder() {
+        return TopicBuilder.name(CLIENT_TOPIC)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+    @Bean
+    public NewTopic productTopicBuilder() {
+        return TopicBuilder.name(PRODUCT_TOPIC)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+    @Bean
+    public NewTopic orderTopicBuilder() {
+        return TopicBuilder.name(ORDER_TOPIC)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+    @Bean
+    public NewTopic clientTriggerTopicBuilder() {
+        return TopicBuilder.name(CLIENT_TRIGGER_TOPIC)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+    @Bean
+    public NewTopic productTriggerTopicBuilder() {
+        return TopicBuilder.name(PRODUCT_TRIGGER_TOPIC)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }
@@ -47,6 +77,13 @@ public class StreamConfig {
         jsonStreamBuilderProperties.put(StreamsConfig.APPLICATION_ID_CONFIG, "kafka-csv-stream");
         return new StreamsBuilderFactoryBean(new KafkaStreamsConfiguration(jsonStreamBuilderProperties));
     }
+    @Bean(name="kTableStreamBuilder")
+    public StreamsBuilderFactoryBean kTableStreamBuilder(){
+        Map<String, Object> jsonStreamBuilderProperties = commonStreamsConfigProperties(1);
+        jsonStreamBuilderProperties.put(StreamsConfig.APPLICATION_ID_CONFIG, "kafka-ktable-stream");
+        return new StreamsBuilderFactoryBean(new KafkaStreamsConfiguration(jsonStreamBuilderProperties));
+    }
+
     private Map<String, Object> commonStreamsConfigProperties(Integer threadcount)  {
         Map<String, Object> props = new HashMap<>();
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
