@@ -32,21 +32,21 @@ public class PendTopology {
                 Consumed.with(Serdes.String(), new JsonSerde<>(Product.class)));
         final KTable<String, PendOrder> pendOrders = streamsBuilder.table(ORDER_TOPIC,
                 Consumed.with(Serdes.String(), new JsonSerde<>(PendOrder.class)));
-        final KStream<String, Client> clientStream = streamsBuilder.stream(CLIENT_TRIGGER_TOPIC,
-                Consumed.with(Serdes.String(), new JsonSerde<>(Client.class)));
-        final KStream<String, ClientOrder> clientOrders = clientStream
-                .join(pendOrders, (client, pendOrder) -> new ClientOrder(client, pendOrder))
-                .filter((key, value) -> value.pendOrder().isPend());
-        final KStream<String, EnrichedOrder> enrichedOrders = clientOrders
-                .join(products, (orderId, clientOrder) -> clientOrder.pendOrder().cusip(),
-                        (clientOrder, product) -> new EnrichedOrder(clientOrder.client, product, clientOrder.pendOrder));
-
-        //TODO - The below section will have revalidation logic and republish Pend Order to order_topic
-        enrichedOrders.peek((key, enrichedOrder) ->
-                log.info("Client : {}, Product : {} Order : {}, ", enrichedOrder.client, enrichedOrder.product, enrichedOrder.pendOrder))
+        streamsBuilder.stream(CLIENT_TRIGGER_TOPIC,
+                        Consumed.with(Serdes.String(), new JsonSerde<>(Client.class)))
+                .join(pendOrders,
+                        (client, pendOrder) -> new ClientOrder(client, pendOrder))
+                .filter((key, value) -> value.pendOrder().isPend())
+                .join(products,
+                        (orderId, clientOrder) -> clientOrder.pendOrder().cusip(),
+                        (clientOrder, product) -> new EnrichedOrder(clientOrder.client, product, clientOrder.pendOrder))
+                .peek((key, enrichedOrder) ->
+                        log.info("Client : {}, Product : {} Order : {}, ", enrichedOrder.client, enrichedOrder.product, enrichedOrder.pendOrder))
                 .foreach((key, enrichedOrder) -> republish(enrichedOrder));
+
     }
 
+    //TODO - The below section will have revalidation logic and republish Pend Order to order_topic
     private static void republish(EnrichedOrder enrichedOrder) {
         PendOrder pendOrder = new PendOrder(enrichedOrder.client.id(), enrichedOrder.product.cusip(), enrichedOrder.pendOrder.amount(), false );
         PendOrderProducer.pendProducer(pendOrder);
