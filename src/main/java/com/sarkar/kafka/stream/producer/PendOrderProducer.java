@@ -27,14 +27,14 @@ public class PendOrderProducer {
     }
     public static void main(String[] args){
         for(long i = 0; i < RECORDS_TO_GENERATE; i++){
-            final PendOrder pendOrder = new PendOrder(i+"", "CUSIP"+i, 300*(i+1), true);
+            final PendOrder pendOrder = new PendOrder(i+"", i+"", "CUSIP"+i, 300*(i+1), true);
             pendProducer(pendOrder);
             log.info("Pub Order : {}", pendOrder);
         }
     }
     public static void pendProducer(PendOrder pendOrder) {
         try {
-            kafkaProducer.send(new ProducerRecord<>(ORDER_TOPIC, pendOrder.clientId(), pendOrder)).get();
+            kafkaProducer.send(new ProducerRecord<>(ORDER_TOPIC, pendOrder.getClientId(), pendOrder)).get();
         } catch (InterruptedException e) {
             log.error("{}", e);
         } catch (ExecutionException e) {

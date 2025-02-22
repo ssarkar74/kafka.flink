@@ -22,8 +22,8 @@ public class ClientTriggerProducer {
         for(long i = 0; i < RECORDS_TO_GENERATE; i++){
             final Client client = new Client(i+"", "Fund ClientX - " + i, "Hedge Fund");
             try {
-                kafkaProducer.send(new ProducerRecord<>(CLIENT_TOPIC, client.id(), client)).get();
-                kafkaProducer.send(new ProducerRecord<>(CLIENT_TRIGGER_TOPIC, client.id(), client)).get();
+                kafkaProducer.send(new ProducerRecord<>(CLIENT_TOPIC, client.getId(), client)).get();
+                kafkaProducer.send(new ProducerRecord<>(CLIENT_TRIGGER_TOPIC, client.getId(), client)).get();
             } catch (InterruptedException e) {
                 log.error("{}", e);
             } catch (ExecutionException e) {

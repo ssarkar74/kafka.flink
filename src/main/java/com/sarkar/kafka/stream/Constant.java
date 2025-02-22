@@ -8,4 +8,5 @@ public class Constant {
     public static final String CLIENT_TRIGGER_TOPIC = "client_trigger_topic";
     public static final String PRODUCT_TRIGGER_TOPIC = "product_trigger_topic";
 
+    public static final String SPECIFIC_CLASS_NAME = "specific.class.name";
 }

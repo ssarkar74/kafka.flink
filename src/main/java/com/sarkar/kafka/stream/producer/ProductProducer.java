@@ -26,7 +26,7 @@ public class ProductProducer {
             final Product product = new Product("CUSIP"+i, "PRODUCT NAME " + i, "NYSE");
             log.info("Pub Product : {}", product);
             try {
-                kafkaProducer.send(new ProducerRecord<>(PRODUCT_TOPIC, product.cusip(), product)).get();
+                kafkaProducer.send(new ProducerRecord<>(PRODUCT_TOPIC, product.getCusip(), product)).get();
             } catch (InterruptedException e) {
                 log.error("{}", e);
             } catch (ExecutionException e) {

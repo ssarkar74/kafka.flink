@@ -21,10 +21,10 @@ public class ClientProducer {
         final KafkaProducer<String, Client> kafkaProducer = new KafkaProducer<>(producerProperties,
                         Serdes.String().serializer(), new JsonSerde<>(Client.class).serializer());
         for(long i = 0; i < RECORDS_TO_GENERATE; i++){
-            final Client client = new Client(i+"", "Fund ClientX - " + i, "Hedge Fund");
+            final Client client = new Client(i+"", "Fund Client - " + i, "Hedge Fund");
             log.info("Pub Client : {}", client);
             try {
-                kafkaProducer.send(new ProducerRecord<>(CLIENT_TOPIC, client.id(), client)).get();
+                kafkaProducer.send(new ProducerRecord<>(CLIENT_TOPIC, client.getId(), client)).get();
             } catch (InterruptedException e) {
                 log.error("{}", e);
             } catch (ExecutionException e) {
