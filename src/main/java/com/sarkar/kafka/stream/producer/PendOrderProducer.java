@@ -6,7 +6,6 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.kafka.support.serializer.JsonSerde;
 
 import java.util.HashMap;
@@ -27,7 +26,7 @@ public class PendOrderProducer {
     }
     public static void main(String[] args){
         for(long i = 0; i < RECORDS_TO_GENERATE; i++){
-            final PendOrder pendOrder = new PendOrder(i+"", i+"", "CUSIP"+i, 300*(i+1), true);
+            final PendOrder pendOrder = new PendOrder(i+"", i+"", "CUSIP"+i, 300*(i+1), System.currentTimeMillis());
             pendProducer(pendOrder);
             log.info("Pub Order : {}", pendOrder);
         }
